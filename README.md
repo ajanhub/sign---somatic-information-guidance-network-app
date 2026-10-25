@@ -45,6 +45,6 @@ The application is broken into three main features:
 ### Setup & Launch
 
 1. Clone or download this project to your computer.
-2. Open your terminal or Command Prompt in the project folder and install the dependencies
+2. Open your terminal or Command Prompt in the project folder and install the dependencies/requirements with pip install -r requirements.txt
 3. Navigate into the folder of the script and run cd (space) the pathway
 4. Lastly, run the app with py -m streamlit run app2.py
