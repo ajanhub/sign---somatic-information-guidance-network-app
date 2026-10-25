@@ -25,7 +25,7 @@ The application is broken into three main features:
 
 ### 2. Symptom Evaluation
 - Guides users through a structured symptom questionnaire with plain-English definitions for complex medical body regions.
-- Uses strict, deterministic decision trees (no AI hallucinations) to assign an appropriate care tier: **Emergency**, **Urgent Care**, **Primary Care**, or **Self-Care**.
+- Uses strict, deterministic decision trees to assign an appropriate care tier: **Emergency**, **Urgent Care**, **Primary Care**, or **Self-Care**.
 - Immediately flags dangerous warning signs or crisis language on screen.
 - Generates a downloadable **Appointment Preparation Summary (.txt)** that users can print or take directly to their doctor.
 
@@ -45,6 +45,6 @@ The application is broken into three main features:
 ### Setup & Launch
 
 1. Clone or download this project to your computer.
-2. Open your terminal or Command Prompt in the project folder and install the dependencies:
-   ```bash
-   pip install -r requirements.txt
+2. Open your terminal or Command Prompt in the project folder and install the dependencies
+3. Navigate into the folder of the script and run cd (space) the pathway
+4. Lastly, run the app with py -m streamlit run app2.py
