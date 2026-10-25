@@ -49,12 +49,5 @@ Setup & Launch
 Clone or download this project to your computer.
 
 Open your terminal or Command Prompt in the project folder and run:
-
-# Optional: Set up and activate a virtual environment
-python -m venv .venv
-# On Windows: .venv\Scripts\activate
-# On macOS/Linux: source .venv/bin/activate
-
-
 # Start the application
 streamlit run app.py
