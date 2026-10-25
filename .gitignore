@@ -1,0 +1,23 @@
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Local database (keeps personal test logs private)
+data/sign.db
+*.db
+*.sqlite3
+
+# Environment variables & API keys
+.env
+.env.local
+
+# Operating system files
+.DS_Store
+Thumbs.db
