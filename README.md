@@ -1,53 +1,50 @@
-# sign---somatic-information-guidance-network-app
-An app built by me for the Congressional App Challenge using Python script.
-SIGN - Somatic Information Guidance Network
+# SIGN: Somatic Information Guidance Network
 
-Built by Akhil Jangari (I used AI to assist with creating this README)
+An application built for the **Congressional App Challenge** using Python and Streamlit.
 
-I built SIGN as a lightweight, privacy-focused health and wellness platform in Python. The goal of this project is to give people an easy, self-contained tool to track their nutrition and evaluate symptoms safely before deciding whether they need to see a doctor.
+**Creator:** Akhil Jangari *(Assisted by AI for documentation and styling)*
 
-Disclaimer: SIGN is strictly educational. It is not a medical device, it never provides clinical diagnoses, and it should never replace an evaluation by a licensed healthcare provider.
+---
 
-What the App Does
+## Overview
+
+I built **SIGN** as a lightweight, privacy-focused health and wellness platform in Python. The goal of this project is to give people an easy, self-contained tool to track their daily nutrition and safely evaluate symptoms before deciding whether they need to see a doctor.
+
+> **Disclaimer:** SIGN is strictly educational. It is not a medical device, it never provides clinical diagnoses, and it should never replace an evaluation or care from a licensed healthcare provider.
+
+---
+
+## What the App Does
 
 The application is broken into three main features:
 
-Calories & Weight Tracker
+### 1. Calories & Weight Tracker
+- Estimates resting metabolism (BMR) and daily energy expenditure (TDEE) using the Mifflin-St Jeor formula based on personal metrics.
+- Calculates personalized maintenance, deficit, or surplus caloric targets with built-in safety minimums.
+- Logs daily meals with full macronutrient breakdowns (protein, carbs, and fats) and tracks weight progress over time with trend lines.
 
-Estimates resting metabolism (BMR) and daily energy expenditure (TDEE) using the Mifflin-St Jeor formula based on personal metrics.
+### 2. Symptom Evaluation
+- Guides users through a structured symptom questionnaire with plain-English definitions for complex medical body regions.
+- Uses strict, deterministic decision trees (no AI hallucinations) to assign an appropriate care tier: **Emergency**, **Urgent Care**, **Primary Care**, or **Self-Care**.
+- Immediately flags dangerous warning signs or crisis language on screen.
+- Generates a downloadable **Appointment Preparation Summary (.txt)** that users can print or take directly to their doctor.
 
-Calculates personalized maintenance, deficit, or surplus caloric targets.
+### 3. Emergency Directory
+- Quick-dial access to essential emergency resources (911, 988 Suicide & Crisis Lifeline, and Poison Control).
+- Direct location search links to find nearby emergency rooms, urgent care centers, and pharmacies.
 
-Logs daily meals with macro breakdowns (protein, carbs, and fats) and tracks weight progress over time with trend lines.
+---
 
-Symptom Evaluation
+## How to Run It Locally
 
-Guides users through a structured symptom questionnaire with plain-English definitions for body regions.
+### Requirements
+- Python 3.10+
+- `streamlit>=1.40`
+- `requests>=2.31`
 
-Uses strict, rule-based decision trees to assign a care tier: Emergency, Urgent Care, Primary Care, or Self-Care.
+### Setup & Launch
 
-Immediately flags dangerous symptoms or crisis language.
-
-Generates a downloadable Appointment Preparation Summary (.txt) that users can print or take directly to their doctor.
-
-Emergency Directory
-
-Quick-dial access to essential resources (911, 988 Suicide & Crisis Lifeline, and Poison Control).
-
-Direct location search links to find nearby emergency rooms, urgent care centers, and pharmacies.
-
-How to Run It Locally
-
-Requirements
-
-Python 3.10+
-streamlit>=1.40
-requests>=2.31
-
-Setup & Launch
-
-Clone or download this project to your computer.
-
-Open your terminal or Command Prompt in the project folder and run:
-# Start the application
-streamlit run app.py
+1. Clone or download this project to your computer.
+2. Open your terminal or Command Prompt in the project folder and install the dependencies:
+   ```bash
+   pip install -r requirements.txt
