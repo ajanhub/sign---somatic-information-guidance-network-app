@@ -1,5 +1,8 @@
 """SIGN - Somatic Information Guidance Network.
 
+An integrated, privacy-focused health and somatic wellness tracking application.
+Developed by Akhil Jangari.
+
 Run with:  streamlit run app.py
 """
 
@@ -14,10 +17,9 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from sign import ai_guidance, report
+from sign import report
 from sign.config import (
     APP_FULL_NAME,
-    DISCLAIMER_POINTS,
     DISCLAIMER_SUMMARY,
 )
 from sign.database import MAX_MEAL_CALORIES, Database
@@ -62,10 +64,22 @@ from sign.triage import (
     scan_free_text,
 )
 
-st.set_page_config(page_title="SIGN", page_icon="🩺", layout="wide")
+# ------------------------------------------------------------ browser favicon & page config
+
+_favicon = "🩺"
+for _candidate in [
+    Path(__file__).parent / "logo.png",
+    Path(__file__).parent / "signapplogocanva.png",
+    Path(__file__).parent / "assets" / "logo.png",
+]:
+    if _candidate.exists():
+        _favicon = str(_candidate)
+        break
+
+st.set_page_config(page_title="SIGN", page_icon=_favicon, layout="wide")
 
 VIEW_DASHBOARD = "Dashboard"
-VIEW_TRACKER = "Calories & Weight"
+VIEW_TRACKER = "Somatic Profile"
 VIEW_EVALUATION = "Symptom Evaluation"
 VIEW_GUIDANCE = "Guidance & Export"
 VIEW_DIRECTORY = "Emergency Directory"
@@ -85,13 +99,21 @@ STEP_TITLES = (
 )
 
 REGION_EXPLANATIONS = {
-    "General / Systemic": "Affects your whole body (e.g., fever, tiredness, body aches, chills).",
-    "Head / Neurological": "Brain, nerve, and head symptoms (e.g., headaches, dizziness, numbness, tingling).",
-    "Respiratory / Chest": "Lungs, breathing, and chest area (e.g., cough, congestion, chest tightness).",
-    "Gastrointestinal": "Stomach, digestion, and gut (e.g., nausea, abdominal pain, diarrhea, heartburn).",
-    "Musculoskeletal": "Muscles, joints, bones, or back (e.g., sprains, joint swelling, stiffness).",
-    "Skin": "Surface reactions (e.g., rash, hives, itching, unusual spots).",
+    "General / Systemic": "Affects your entire body (e.g., fatigue, chills, body aches, fever).",
+    "Head / Neurological": "Brain, nerve, and cranial symptoms (e.g., tension headaches, dizziness, numbness, sensory changes).",
+    "Respiratory / Chest": "Lungs, breathing airways, and chest cage (e.g., cough, wheezing, congestion, tightness).",
+    "Gastrointestinal": "Stomach, digestion, and gut health (e.g., nausea, abdominal cramping, acid reflux, bloating).",
+    "Musculoskeletal": "Muscles, joints, tendons, and spine (e.g., joint swelling, localized muscle soreness, back stiffness).",
+    "Skin": "Dermal and surface reactions (e.g., irritation, hives, rashes, unusual lesions).",
 }
+
+DISCLAIMER_POINTS = (
+    "SIGN suggests an evidence-based level of care (emergency, urgent care, primary care, or self-care). It never provides medical diagnoses.",
+    "If you think you or someone else is having a medical emergency, call 911 immediately. For a mental health crisis, call or text 988.",
+    "Deterministic clinical triage rules decide the care level and supportive guidance based entirely on your answers.",
+    "Your health records and profiles are 100% private and stored locally on your machine. Symptom evaluations are kept in temporary session memory only and are never transmitted over the internet.",
+    "Caloric and weight calculations are metabolic estimates based on the Mifflin-St Jeor equation, not a medical diet or prescription.",
+)
 
 DEFAULT_DB_PATH = Path(__file__).parent / "data" / "sign.db"
 SLATE = "#37474f"
@@ -101,8 +123,8 @@ EMERGENCY_RED = "#b71c1c"
 # ------------------------------------------------------------ logo helper
 
 
-def get_logo_html(size_px: int = 70) -> str:
-    """Return an HTML snippet for a circular logo that blends seamlessly into the background."""
+def get_logo_html(size_px: int = 68) -> str:
+    """Return a circular branding logo element that blends with the dark UI."""
     paths_to_check = [
         Path(__file__).parent / "logo.png",
         Path(__file__).parent / "signapplogocanva.png",
@@ -112,20 +134,20 @@ def get_logo_html(size_px: int = 70) -> str:
     if logo_file:
         encoded = base64.b64encode(logo_file.read_bytes()).decode()
         return (
-            f'<div style="display:flex;align-items:center;gap:12px;">'
+            f'<div style="display:flex;align-items:center;gap:14px;">'
             f'<img src="data:image/png;base64,{encoded}" '
             f'style="width:{size_px}px;height:{size_px}px;border-radius:50%;'
-            f'object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,0.4);border:2px solid #2e3842;">'
-            f'<div><span style="font-size:1.45rem;font-weight:800;letter-spacing:0.04em;">SIGN</span><br>'
-            f'<span style="font-size:0.75rem;color:#94a3b8;">Health Guidance Network</span></div>'
+            f'object-fit:cover;box-shadow:0 3px 10px rgba(0,0,0,0.5);border:2px solid #2e3842;">'
+            f'<div><div style="font-size:1.45rem;font-weight:800;letter-spacing:0.04em;line-height:1.1;">SIGN</div>'
+            f'<div style="font-size:0.75rem;color:#94a3b8;font-weight:500;">Somatic Information Guidance Network</div></div>'
             f'</div>'
         )
     return (
-        f'<div style="display:flex;align-items:center;gap:10px;">'
+        f'<div style="display:flex;align-items:center;gap:12px;">'
         f'<div style="width:{size_px}px;height:{size_px}px;border-radius:50%;background:#1e293b;'
         f'display:flex;align-items:center;justify-content:center;font-size:1.8rem;border:2px solid #334155;">🩺</div>'
-        f'<div><span style="font-size:1.45rem;font-weight:800;letter-spacing:0.04em;">SIGN</span><br>'
-        f'<span style="font-size:0.75rem;color:#94a3b8;">Health Guidance Network</span></div>'
+        f'<div><div style="font-size:1.45rem;font-weight:800;letter-spacing:0.04em;line-height:1.1;">SIGN</div>'
+        f'<div style="font-size:0.75rem;color:#94a3b8;font-weight:500;">Somatic Information Guidance Network</div></div>'
         f'</div>'
     )
 
@@ -146,11 +168,11 @@ def init_state() -> None:
     defaults = {
         "acknowledged": False,
         "view": VIEW_DASHBOARD,
+        "top_nav_selector": VIEW_DASHBOARD,
         "units": IMPERIAL,
         "wiz_step": 0,
         "wiz": {},
         "triage": None,
-        "guidance_cache": {},
     }
     for key, value in defaults.items():
         if key not in st.session_state:
@@ -158,7 +180,17 @@ def init_state() -> None:
 
 
 def go_to(view: str) -> None:
+    """Seamlessly switch views without illegally mutating an instantiated widget key."""
     st.session_state["view"] = view
+
+
+def on_nav_change() -> None:
+    """Callback triggered whenever the user clicks a tab in the top navigation."""
+    selected = st.session_state.get("top_nav_selector")
+    if selected is None:
+        st.session_state["top_nav_selector"] = st.session_state["view"]
+    else:
+        st.session_state["view"] = selected
 
 
 def banner(title: str, lines=(), color: str = EMERGENCY_RED) -> None:
@@ -233,7 +265,6 @@ def render_gate() -> None:
 def wipe_data() -> None:
     get_db().clear_all()
     st.session_state["triage"] = None
-    st.session_state["guidance_cache"] = {}
     st.session_state["wiz"] = {}
     st.session_state["wiz_step"] = 0
     st.session_state["wipe_confirm"] = False
@@ -241,22 +272,23 @@ def wipe_data() -> None:
 
 
 def render_top_navigation() -> None:
-    nav_logo, nav_views, nav_units = st.columns([2.2, 5.0, 1.4], vertical_alignment="center")
+    nav_logo, nav_views, nav_units = st.columns([2.4, 4.8, 1.4], vertical_alignment="center")
 
     with nav_logo:
-        st.markdown(get_logo_html(size_px=58), unsafe_allow_html=True)
+        st.markdown(get_logo_html(size_px=54), unsafe_allow_html=True)
 
     with nav_views:
-        chosen_view = st.segmented_control(
+        # Sync the widget state BEFORE instantiation to fix the StreamlitWidgetAlreadyInstantiatedError
+        if st.session_state.get("top_nav_selector") != st.session_state["view"]:
+            st.session_state["top_nav_selector"] = st.session_state["view"]
+
+        st.segmented_control(
             "Navigation",
             VIEWS,
-            default=st.session_state["view"],
             label_visibility="collapsed",
             key="top_nav_selector",
+            on_change=on_nav_change,
         )
-        if chosen_view and chosen_view != st.session_state["view"]:
-            st.session_state["view"] = chosen_view
-            st.rerun()
 
     with nav_units:
         st.segmented_control(
@@ -267,7 +299,7 @@ def render_top_navigation() -> None:
             label_visibility="collapsed",
         )
 
-    st.markdown('<hr style="margin:0.7rem 0 1.5rem 0;opacity:0.25;">', unsafe_allow_html=True)
+    st.markdown('<hr style="margin:0.5rem 0 1.3rem 0;opacity:0.25;">', unsafe_allow_html=True)
 
 
 # ------------------------------------------------------------------ dashboard
@@ -292,7 +324,7 @@ def view_dashboard() -> None:
                 text=f"Daily target: {target:,} kcal",
             )
         else:
-            st.caption("Save your profile to see a daily target.")
+            st.caption("Save your somatic profile to see a daily target.")
 
     with middle:
         st.subheader("Latest weight")
@@ -315,7 +347,7 @@ def view_dashboard() -> None:
 
     with right:
         st.subheader("Feeling unwell?")
-        st.write("Answer a few questions to find out how quickly to get care.")
+        st.write("Answer a few quick questions to determine how quickly to get care.")
         st.button(
             "🩺 Evaluate a symptom",
             type="primary",
@@ -325,7 +357,7 @@ def view_dashboard() -> None:
         )
 
     if profile is None:
-        st.info("Start by saving your profile so SIGN can estimate your calorie needs.")
+        st.info("Start by setting up your somatic profile so SIGN can estimate your metabolic baseline and targets.")
         st.button(
             "Set up my profile",
             key="dash_profile",
@@ -334,7 +366,7 @@ def view_dashboard() -> None:
         )
     if st.session_state.get("triage"):
         st.divider()
-        st.write("You have a recent symptom check from this session.")
+        st.write("You have a recent symptom evaluation on record from this session.")
         st.button(
             "View my results",
             key="dash_results",
@@ -343,14 +375,14 @@ def view_dashboard() -> None:
         )
 
 
-# -------------------------------------------------------------------- tracker
+# ---------------------------------------------------------------- somatic profile
 
 
 def view_tracker() -> None:
-    st.header("Calories & Weight")
+    st.header("Somatic Profile")
     database = get_db()
-    profile_tab, meals_tab, weight_tab = st.tabs(
-        ["Profile & targets", "Meals", "Weight"]
+    profile_tab, meals_tab, weight_tab, guides_tab = st.tabs(
+        ["Profile & targets", "Meals", "Weight", "Evidence-Based Guides"]
     )
     with profile_tab:
         tab_profile(database)
@@ -358,6 +390,8 @@ def view_tracker() -> None:
         tab_meals(database)
     with weight_tab:
         tab_weight(database)
+    with guides_tab:
+        tab_guides()
 
 
 def tab_profile(database: Database) -> None:
@@ -389,7 +423,7 @@ def tab_profile(database: Database) -> None:
             step=1,
         )
         sex_label = right.radio(
-            "Sex assigned at birth (used only in the calorie formula)",
+            "Sex assigned at birth (used only in the metabolic formula)",
             sexes,
             index=sexes.index(profile.sex.capitalize()) if profile else 0,
             horizontal=True,
@@ -444,7 +478,7 @@ def tab_profile(database: Database) -> None:
             horizontal=True,
         )
         submitted = st.form_submit_button(
-            "Save profile", type="primary", key="save_profile"
+            "Save somatic profile", type="primary", key="save_profile"
         )
 
     if submitted:
@@ -469,17 +503,17 @@ def tab_profile(database: Database) -> None:
             latest = database.latest_weight()
             if latest is None or abs(latest[1] - new_profile.weight_kg) > 0.05:
                 database.log_weight(date.today(), new_profile.weight_kg)
-            st.success("Profile saved.")
+            st.success("Somatic profile saved.")
             profile = database.get_profile()
 
     if profile is None:
-        st.info("Save your profile to see your calorie targets.")
+        st.info("Save your profile to calculate your resting metabolic rate and energy targets.")
         return
 
     targets = calorie_targets(profile)
-    st.subheader("Your daily calorie estimates")
+    st.subheader("Your metabolic estimates")
     cols = st.columns(4)
-    cols[0].metric("BMR", f"{targets.bmr:,.0f} kcal")
+    cols[0].metric("BMR (Basal)", f"{targets.bmr:,.0f} kcal")
     cols[1].metric("Maintenance (TDEE)", f"{targets.maintenance:,} kcal")
     cols[2].metric(
         "Deficit (-400)",
@@ -490,15 +524,15 @@ def tab_profile(database: Database) -> None:
         f"{targets.surplus:,} kcal" if targets.surplus else "Not offered",
     )
     st.success(
-        f"Your daily target ({targets.selected_goal.lower()}): "
+        f"Your active daily target ({targets.selected_goal.lower()}): "
         f"**{targets.selected:,} kcal**"
     )
     for note in targets.notes:
         st.info(note)
     st.caption(
-        "Estimates use the Mifflin-St Jeor equation. They are starting "
-        "points, not a prescription. Talk to a doctor or dietitian before "
-        "making big changes to how you eat."
+        "Calculations use the validated Mifflin-St Jeor equation. These values represent "
+        "evidence-based baselines. Consult a healthcare provider or registered dietitian before "
+        "making significant nutritional or caloric changes."
     )
 
 
@@ -507,7 +541,7 @@ def tab_meals(database: Database) -> None:
     st.subheader("Log a meal or snack")
     with st.form("meal_form", clear_on_submit=True):
         top_left, top_right = st.columns([2, 1])
-        meal_name = top_left.text_input("Meal or food name")
+        meal_name = top_left.text_input("Meal or food item")
         meal_day = top_right.date_input(
             "Date", value=today, max_value=today, key="meal_day"
         )
@@ -576,10 +610,10 @@ def tab_meals(database: Database) -> None:
         )
         st.bar_chart(chart)
         st.caption(
-            f"Protein {breakdown['protein']['percent']:.0f}% - "
-            f"Carbs {breakdown['carbs']['percent']:.0f}% - "
-            f"Fats {breakdown['fats']['percent']:.0f}% of macro calories "
-            "(from grams: 4, 4 and 9 kcal per gram)."
+            f"Protein: {breakdown['protein']['percent']:.0f}% | "
+            f"Carbohydrates: {breakdown['carbs']['percent']:.0f}% | "
+            f"Fats: {breakdown['fats']['percent']:.0f}% of macronutrient calories "
+            "(calculated via standard physiological density: 4 kcal/g protein, 4 kcal/g carbs, 9 kcal/g fat)."
         )
 
 
@@ -639,7 +673,7 @@ def tab_weight(database: Database) -> None:
         )
         st.line_chart(chart)
     elif history:
-        st.info("Log at least two weights to see a trend line.")
+        st.info("Log at least two weights to visualize your longitudinal progress curve.")
     if history:
         recent = pd.DataFrame(
             {
@@ -651,6 +685,106 @@ def tab_weight(database: Database) -> None:
             }
         )
         st.dataframe(recent, hide_index=True)
+
+
+def tab_guides() -> None:
+    st.subheader("Trusted Health, Fasting & Body Recomposition Guides")
+    st.write(
+        "Explore peer-reviewed research, clinical overviews, and dietary guidelines from "
+        "leading health institutions to help inform your personal health strategy."
+    )
+
+    g1, g2 = st.columns(2)
+
+    with g1:
+        with st.container(border=True):
+            st.markdown("### 🧬 Body Recomposition")
+            st.write(
+                "Body recomposition refers to the simultaneous reduction of adipose body fat "
+                "alongside the preservation or accretion of lean skeletal muscle mass. "
+                "Unlike standard weight loss, recomposition focuses on body composition ratios "
+                "through progressive resistance training, adequate protein distribution, and small, "
+                "controlled caloric adjustments rather than severe deficits."
+            )
+            st.markdown("**Key principles:**")
+            st.markdown("- Maintain a slight deficit or caloric maintenance.")
+            st.markdown("- Target 1.6–2.2 grams of protein per kilogram of body weight.")
+            st.markdown("- Pair with progressive resistance training 3–5 days per week.")
+            b1, b2 = st.columns(2)
+            b1.link_button(
+                "Cleveland Clinic: Body Recomp",
+                "https://health.clevelandclinic.org/body-recomposition",
+            )
+            b2.link_button(
+                "NIH PubMed: Muscle & Fat Regimens",
+                "https://pubmed.ncbi.nlm.nih.gov/32853334/",
+            )
+
+        with st.container(border=True):
+            st.markdown("### ⚖️ Caloric Deficits & Safe Weight Loss")
+            st.write(
+                "A sustainable caloric deficit involves consuming slightly fewer calories than your "
+                "Total Daily Energy Expenditure (TDEE). Scientific consensus emphasizes that a "
+                "conservative deficit of 300 to 500 kcal/day promotes healthy fat loss (approx. 0.5–1 lb/week) "
+                "while minimizing metabolic adaptation, hormonal disruption, and muscle loss."
+            )
+            st.markdown("**Key principles:**")
+            st.markdown("- Avoid extreme crash diets that drop below baseline metabolic minimums.")
+            st.markdown("- Enforce a strict safe floor of at least 1,200–1,500 kcal/day.")
+            st.markdown("- Re-evaluate maintenance targets as your body weight shifts.")
+            c1, c2 = st.columns(2)
+            c1.link_button(
+                "CDC: Healthy Weight Loss",
+                "https://www.cdc.gov/healthy-weight-growth/about/index.html",
+            )
+            c2.link_button(
+                "Mayo Clinic: Calorie Counting Guide",
+                "https://www.mayoclinic.org/healthy-lifestyle/weight-loss/in-depth/calories/art-20048065",
+            )
+
+    with g2:
+        with st.container(border=True):
+            st.markdown("### ⏱️ Intermittent Fasting Protocols")
+            st.write(
+                "Intermittent fasting focuses on cycling between dedicated periods of eating and voluntary fasting. "
+                "Common protocols include the 16/8 time-restricted window and circadian-aligned eating. "
+                "Clinical research indicates fasting can support metabolic flexibility, insulin sensitivity, "
+                "and cellular autophagy when executed safely without severe nutrient deficiency."
+            )
+            st.markdown("**Key principles:**")
+            st.markdown("- Common protocol: 16 hours fasting / 8 hours feeding window.")
+            st.markdown("- Stay well-hydrated with water and electrolytes during fasting periods.")
+            st.markdown("- Not recommended for adolescents, pregnant individuals, or those with eating disorder history.")
+            f1, f2 = st.columns(2)
+            f1.link_button(
+                "Johns Hopkins: Fasting Benefits",
+                "https://www.hopkinsmedicine.org/health/wellness-and-prevention/intermittent-fasting",
+            )
+            f2.link_button(
+                "Harvard Health: Fasting Review",
+                "https://www.hsph.harvard.edu/nutritionsource/healthy-weight/diet-reviews/intermittent-fasting/",
+            )
+
+        with st.container(border=True):
+            st.markdown("### 🥗 Macronutrient Science & Plate Balance")
+            st.write(
+                "Balancing protein, complex carbohydrates, and dietary fats is vital for sustained energy, "
+                "hormonal homeostasis, and physiological recovery. The Harvard Healthy Eating Plate and USDA Dietary Guidelines "
+                "recommend prioritizing whole grains, lean proteins, colorful vegetables, and healthy unsaturated fats."
+            )
+            st.markdown("**Key principles:**")
+            st.markdown("- Complex carbs (quinoa, oats, brown rice) provide sustained glycogen.")
+            st.markdown("- Healthy fats (olive oil, avocados, nuts) support endocrine health.")
+            st.markdown("- Prioritize whole dietary sources over ultra-processed foods.")
+            m1, m2 = st.columns(2)
+            m1.link_button(
+                "Harvard: The Nutrition Source",
+                "https://www.hsph.harvard.edu/nutritionsource/",
+            )
+            m2.link_button(
+                "USDA: Dietary Guidelines",
+                "https://www.dietaryguidelines.gov/",
+            )
 
 
 # -------------------------------------------------------------- symptom evaluation
@@ -703,7 +837,7 @@ def wizard_region(wiz: dict) -> None:
     with right_col:
         st.markdown("**What these areas mean:**")
         for reg_name, explanation in REGION_EXPLANATIONS.items():
-            st.markdown(f"• **{reg_name}**  \n*{explanation}*")
+            st.markdown(f"• **{reg_name}**: *{explanation}*")
 
     if next_clicked:
         if wiz.get("region") != region:
@@ -720,7 +854,7 @@ def wizard_symptoms(wiz: dict) -> None:
     if alert_keys:
         render_emergency([RED_FLAGS_BY_KEY[key] for key in alert_keys])
         st.warning(
-            "Your notes mention something that can be an emergency. Please get help first."
+            "Your notes mention something that can be an emergency. Please get immediate medical attention."
         )
         if st.button(
             "I understand - continue my symptom evaluation",
@@ -755,7 +889,7 @@ def wizard_symptoms(wiz: dict) -> None:
         wiz.pop("alert_flags", None)
         set_step(0)
     if not selected and not notes.strip():
-        st.error("Please choose at least one symptom or describe it.")
+        st.error("Please choose at least one symptom or describe your symptoms.")
         return
     flags = scan_free_text(notes)
     if flags and wiz.get("alert_ack_text") != notes:
@@ -820,7 +954,7 @@ def wizard_red_flags(wiz: dict) -> None:
     ]
     if checked:
         render_emergency([RED_FLAGS_BY_KEY[key] for key in checked])
-        st.caption("Please get help first. You can still view your summary below.")
+        st.caption("Please get help first. You can still view your evaluation summary below.")
     back_col, finish_col = st.columns(2)
     if back_col.button("Back", key="wiz_back_3"):
         set_step(2)
@@ -853,7 +987,7 @@ def view_guidance() -> None:
     st.header("Guidance & Export")
     triage = st.session_state.get("triage")
     if triage is None:
-        st.info("You have not done a symptom evaluation yet.")
+        st.info("You have not completed a symptom evaluation yet.")
         st.button(
             "Start a symptom evaluation",
             type="primary",
@@ -876,13 +1010,10 @@ def view_guidance() -> None:
     st.markdown("**Why SIGN chose this level**")
     for reason in result.reasons:
         st.markdown(f"- {reason}")
-    st.caption("SIGN suggests how quickly to seek care. It does not diagnose.")
+    st.caption("SIGN suggests how quickly to seek medical care based on fixed triage criteria. It does not provide clinical diagnoses.")
 
     st.divider()
-    if result.tier is Tier.EMERGENCY:
-        st.info(ai_guidance.EMERGENCY_GUIDANCE)
-    else:
-        render_guidance_text(inp, result, profile)
+    render_clinical_guidance(result)
 
     st.divider()
     st.subheader("Appointment Preparation Summary")
@@ -900,7 +1031,7 @@ def view_guidance() -> None:
         mime="text/plain",
         key="download_summary",
     )
-    st.caption("Download and print this summary file (Ctrl+P or Cmd+P) to bring to your appointment.")
+    st.caption("Download and print this summary file (Ctrl+P or Cmd+P) to bring directly to your appointment.")
     st.button(
         "Start a new symptom evaluation",
         key="guidance_new",
@@ -909,35 +1040,34 @@ def view_guidance() -> None:
     )
 
 
-def render_guidance_text(inp, result, profile) -> None:
-    config = ai_guidance.load_config()
-    use_ai = False
-    if config.enabled:
-        use_ai = st.toggle("Use AI-written tips", value=True, key="use_ai")
-        st.caption(
-            "When this is on, the details of this symptom check plus your "
-            f"age and sex are sent to {config.description} to write the tips "
-            "below. No name or contact information is sent."
+def render_clinical_guidance(result) -> None:
+    """Built-in clinical comfort measures and guidance based on triage care tier."""
+    if result.tier is Tier.EMERGENCY:
+        st.error(
+            "**Emergency Protocol:** This situation requires immediate medical evaluation. "
+            "Call 911 or go to the nearest emergency department right away. Do not attempt to drive yourself "
+            "if you feel faint, weak, or short of breath."
         )
+        return
 
-    cache = st.session_state["guidance_cache"]
-    cache_key = (
-        inp,
-        use_ai,
-        profile.age if profile else None,
-        profile.sex if profile else None,
-    )
-    guidance = cache.get(cache_key)
-    if guidance is None:
-        with st.spinner("Preparing your guidance..."):
-            guidance = ai_guidance.get_guidance(
-                inp, result, profile, config, use_ai
-            )
-        if not use_ai or guidance.source == "ai":
-            cache[cache_key] = guidance
-    if guidance.note:
-        st.warning(guidance.note)
-    st.markdown(guidance.text)
+    st.subheader("Recommended Comfort & Monitoring Measures")
+    c1, c2 = st.columns(2)
+
+    with c1:
+        with st.container(border=True):
+            st.markdown("### 🛏️ Supportive Self-Care")
+            st.markdown("- **Rest & Recovery:** Avoid strenuous exertion; give your body time to heal.")
+            st.markdown("- **Adequate Hydration:** Sip water, warm herbal teas, or electrolyte fluids regularly.")
+            st.markdown("- **Comfort Temperature:** Dress in light layers to stay comfortable if feeling chilled or warm.")
+            st.markdown("- **Nutrition:** Opt for light, easily digestible meals if you have an appetite.")
+
+    with c2:
+        with st.container(border=True):
+            st.markdown("### ⚠️ When to Seek Care Sooner")
+            st.markdown("- Symptoms rapidly worsen or do not show improvement within 48–72 hours.")
+            st.markdown("- New symptoms emerge, such as a high persistent fever or severe localized pain.")
+            st.markdown("- Any emergency red flag develops (trouble breathing, chest pain, fainting, confusion).")
+            st.markdown("- Call or text **988** if experiencing acute emotional distress or mental health crisis.")
 
 
 # ------------------------------------------------------------------ directory
@@ -945,7 +1075,7 @@ def render_guidance_text(inp, result, profile) -> None:
 
 def view_directory() -> None:
     st.header("Emergency Directory")
-    st.write("Tap a number to call from a phone, or dial it yourself.")
+    st.write("Tap a number to call immediately from a phone, or dial it directly.")
     for helpline in HELPLINES:
         with st.container(border=True):
             info_col, button_col = st.columns([3, 1])
@@ -962,8 +1092,8 @@ def view_directory() -> None:
     for column, (label, query) in zip(columns, FACILITY_SEARCHES):
         column.link_button(f"Find {label}", facility_search_url(query))
     st.caption(
-        "These open Google Maps in a new tab. Your browser may ask to share "
-        "your location with Google Maps. SIGN does not see or store it."
+        "These search shortcuts open Google Maps in a new tab. Your browser may ask to share "
+        "your location with Google Maps. SIGN does not see or store your location."
     )
 
 
@@ -979,12 +1109,12 @@ VIEW_RENDERERS = {
 def render_footer_privacy() -> None:
     with st.expander("Privacy and data options"):
         st.caption(
-            "Your profile, meals, and weights are saved locally on this computer. "
-            "Symptom checks are discarded once the session is closed."
+            "Your somatic profile, meals, and weights are saved locally on your computer in data/sign.db. "
+            "Symptom checks are held in session memory only and discarded once the browser session ends."
         )
         if st.session_state.get("wipe_done"):
             del st.session_state["wipe_done"]
-            st.success("All saved data was deleted.")
+            st.success("All local saved data was deleted.")
         st.checkbox("I understand this cannot be undone", key="wipe_confirm")
         st.button(
             "Delete all my saved data",
